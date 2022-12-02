@@ -1,0 +1,7 @@
+#!/bin/csh
+#$ -M mtaylo15@nd.edu
+#$ -m abe
+#$ -r y
+
+module load stata
+stata -b do perm_marg.do
