@@ -36,6 +36,7 @@ library(text2map.dictionaries)
 
 data <- readtext(paste0(getwd(), "/TXTs/*"))
 pre.meta <- read.csv("pre_topic_meta.csv", row.names = 1, header = T)
+data("concreteness", package = "text2map.dictionaries")
 
 
 ######################################
@@ -155,10 +156,66 @@ data.final <- cbind(meta, wn.stm$theta)
 #  Construal scores
 ######################################
 
+  # Create dictionaries
+concrete <- concreteness %>%
+  filter(concrete_mean >= median(concrete_mean)) %>%
+  select(term)
 
+abstract <- concreteness %>%
+  filter(concrete_mean < median(concrete_mean)) %>%
+  select(term)
 
+  # Create non-lemmatized DTM
+df.nolemma <- data %>%
+  unnest_tokens(word, text) %>%
+  filter(!nchar(word) <= 2) %>%
+  anti_join(stop_words) %>%
+  filter(!(word %in% c("page")))
 
+  # get DTM
+dtm.nolemma <- df.nolemma %>%
+  group_by(doc_id, word) %>%
+  summarize(n = n()) %>%
+  cast_dtm(
+    document = doc_id,
+    term = word,
+    value = n,
+    weighting = tm::weightTf
+  )
 
+# remove sparse terms with .4 factor
+dtm.nolemma <- removeSparseTerms(dtm.nolemma, 0.6) 
+
+  # Get scores
+word.concrete <- intersect(colnames(dtm.nolemma), concrete$term)
+word.abstract <- intersect(colnames(dtm.nolemma), abstract$term)
+
+dtm.concrete <- dtm.nolemma[, word.concrete]
+dtm.abstract <- dtm.nolemma[, word.abstract]
+
+concrete.sum <- rowSums(as.matrix(dtm.concrete))
+abstract.sum <- rowSums(as.matrix(dtm.abstract))
+
+construal <- (concrete.sum - abstract.sum) / (concrete.sum + abstract.sum)
+
+construal <- as.data.frame(construal) %>%
+  rownames_to_column(var = "article_id")
+
+data.final <- data.final %>%
+  rownames_to_column(var = "article_id") %>%
+  left_join(construal, by = "article_id") %>%
+  group_by(org, year) %>%
+  summarize_if(is.numeric, ~ mean(.x, na.rm = TRUE))
+
+  # get rolling mean
+data.final %>% 
+  arrange(org, year) %>% 
+  group_by(org) %>%
+  mutate_at(c("construal"), cummean) %>% 
+  mutate_at(c("construal"), lag) %>% 
+  mutate_at(c("construal"), funs(ifelse(is.na(.), 0, .))) %>% 
+  arrange(org, year) %>% 
+  ungroup()
 
 
 
