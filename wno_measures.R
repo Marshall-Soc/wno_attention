@@ -65,15 +65,16 @@ data <- data %>%
          text = trimws(text))
 
 pre.meta <- pre.meta[order(match(rownames(pre.meta), data$doc_id)),]
-identical(rownames(pre.meta), data$doc_id) #should be true
+# identical(rownames(pre.meta), data$doc_id) #should be true
 
-# pre.meta$doc_id <- paste0("doc", 1:nrow(data))
+pre.meta$doc_id <- paste0("doc", 1:nrow(data))
 
   # Load in English language model for POS and lemmatization
 eng <- udpipe_download_model(language = "english-gum")
 ud_eng <- udpipe_load_model(eng$file_model)
 
-lemmas <- udpipe_annotate(
+lemmas <- udpipe_annotate( #this can take a while; you can instead load 
+                           #the lemmas.rds file in the repo
   x = data$text,
   object = ud_eng) %>%
   as_tibble() %>%
@@ -108,14 +109,14 @@ dtm <- removeSparseTerms(dtm, 0.6)
 
   #Prep for STM
 pre.meta <- pre.meta[order(match(pre.meta$doc_id, rownames(dtm))),]
-# identical(pre.meta$doc_id, rownames(dtm)) should be TRUE
+identical(pre.meta$doc_id, rownames(dtm)) #should be TRUE
 
-out <- readCorpus(dtm, type = "slam")
+# out <- readCorpus(dtm, type = "slam")
 out <- prepDocuments(out$documents, out$vocab, pre.meta)
 docs <- out$documents
 vocab <- out$vocab
 meta <- out$meta 
-# identical(names(docs), meta$doc_id) Should be TRUE
+# identical(names(docs), meta$doc_id) #should be TRUE
 
   # Find optimal k
 wn_modelk <- searchK(docs, vocab, K = seq(2, 20, by = 1), N = 50,
@@ -139,6 +140,8 @@ wn.stm <- stm(docs, vocab, K = 8,
               init.type = "Spectral")
 
   # Interpret the topics
+colMeans(wn.stm$theta) #marginal topic probabilities
+
 plot(wn.stm, type = "summary", n = 5, main = "", labeltype = "prob")
 
 sageLabels(wn.stm) #Topic #2 = Borders and Immigration
@@ -176,7 +179,7 @@ df.nolemma <- data %>%
   # get DTM
 dtm.nolemma <- df.nolemma %>%
   group_by(doc_id, word) %>%
-  summarize(n = n()) %>%
+  dplyr::summarize(n = n()) %>%
   cast_dtm(
     document = doc_id,
     term = word,
@@ -212,11 +215,23 @@ data.final <- data.final %>%
   rownames_to_column(var = "article_id") %>%
   left_join(word.count, by = "article_id")
 
+  # temporarily convernt admin to numeric
+data.final$admin <- recode(data.final$admin, Reagan = 1,
+         HWBush = 2,
+         Clinton = 3,
+         WBush = 4)
+
   # Add construal scores
 data.final <- data.final %>%
   left_join(construal, by = "article_id") %>%
   group_by(org, year) %>%
   summarize_if(is.numeric, ~ mean(.x, na.rm = TRUE))
+
+  # Take admin back to factor
+data.final$admin <- recode(data.final$admin, `1` = "Reagan",
+                           `2` = "HWBush",
+                           `3` = "Clinton",
+                           `4` = "WBush")
 
   # get rolling means and then style variables (including discursive style)
 data.final <- data.final %>% 
@@ -237,7 +252,7 @@ data.final <- data.final %>%
 ######################################
 
 data.final$terror_nr <- data.final$terror_nright / 
-  (data.final$population_y2 * (1 - data.final$hisp_inter))
+  (data.final$population * (1 - data.final$hisp_inter))
 
 
 ######################################
@@ -245,7 +260,7 @@ data.final$terror_nr <- data.final$terror_nright /
 ######################################
 
   # Violent crime rate
-data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population_y2/1000))+1)
+data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population/1000))+1)
 
 
 ######################################
@@ -256,12 +271,14 @@ data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population_y2/1000)
 data.final$log_vocality <- log(data.final$vocality+1)
 
 
+######################################
+#  Save final data
+######################################
+
+saveRDS(data.final, "wno_data.rds")
 
 
-
-
-
-
+### END ###
 
 
 

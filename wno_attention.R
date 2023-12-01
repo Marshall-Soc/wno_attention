@@ -25,7 +25,7 @@ source("perm_table.R") #function to perform stratified Monte Carlo permutation t
 #  Data
 ######################################
 
-meta <- readRDS("meta.rds") #Metadata for all 384 docs (for frequency table)
+doc_type <- readRDS("doc_type.rds") #Doc type for all 384 docs (for frequency table)
 
 desc9708 <- read.csv("group_desc.csv", header = T) %>%
   pivot_longer(cols = KKK:White.Nationalist) #for the intro figure
@@ -63,10 +63,10 @@ dev.off()
 
 fig1 <- meta %>%
   group_by(state, org) %>%
-  summarize(sum = 1) %>%
+  dplyr::summarize(sum = 1) %>%
   ungroup() %>%
   group_by(state) %>%
-  summarize(sum = n()) %>%
+  dplyr::summarize(sum = n()) %>%
   mutate(state = recode_factor(state, "Mississippii" = "Mississippi")) %>%
   mutate(state = fct_reorder(state, desc(sum))) %>%
   ggplot(aes(x = state, y = sum)) +
@@ -85,7 +85,7 @@ dev.off()
 #  Table #1
 ######################################
 
-freq_table(meta, doc_type)
+freq_table(as.data.frame(doc_type), doc_type)
 
 
 ######################################
@@ -95,17 +95,17 @@ freq_table(meta, doc_type)
   #Note: Two other models are in the appendix section below: one with just
       #the environmental shock DV, and another that adds construal style
       #and the envr*construal interaction
-model <- plm(lo_immigrant_dup ~ stdlagconabst_pol2_dup*terror_nr + laglo_immigrant_dup +
-               per_repub1_dup + lo_vcrime_rate + factor(reform) +
-               factor(p2001) + logvocality_dup + word_count_dup +
-               factor(admin42),
+model <- plm(immigration ~ construal_style*terror_nr + discursive_style +
+               per_repub + vcrime_rate + factor(reform) +
+               factor(p2001) + log_vocality + word_count +
+               factor(admin),
              data = wno_data,
-             index = c("org2","year"),
+             index = c("org","year"),
              model = "within")
 
 mat <- perm_table(data = wno_data, model = model,
-                  perm_v = "lo_immigrant_dup", statistic = "coefficients", 
-                  strata_v = "org2", seed = 123)
+                  perm_v = "immigration", statistic = "coefficients", 
+                  strata_v = "org", seed = 123)
 
 
 ######################################
