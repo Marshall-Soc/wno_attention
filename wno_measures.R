@@ -248,15 +248,12 @@ data.final$terror_nr <- data.final$terror_nright /
 data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population_y2/1000))+1)
 
 
+temp <- pre.meta
 
-temp <- left_join(pre.meta, wno_data[,c("population_y2","per_repub1_dup",
-                                        "reform","logvocality_dup",
-                                        "word_count_dup","admin42")],
-                  by = "")
+temp$temp_id <- paste0(temp$state,temp$county,temp$year)
+wno_data$temp_id <- paste0(wno_data$state,wno_data$county,wno_data$year)
 
-
-
-
+temp <- left_join(temp, wno_data[,c("temp_id","population_y2")], by = "temp_id")
 
 
 
