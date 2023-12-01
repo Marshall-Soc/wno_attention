@@ -202,8 +202,18 @@ construal <- (concrete.sum - abstract.sum) / (concrete.sum + abstract.sum)
 construal <- as.data.frame(construal) %>%
   rownames_to_column(var = "article_id")
 
+  # Get word counts
+word.count <- rowSums(as.matrix(dtm.nolemma)) %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "article_id") %>%
+  rename("word_count" = 2)
+
 data.final <- data.final %>%
   rownames_to_column(var = "article_id") %>%
+  left_join(word.count, by = "article_id")
+
+  # Add construal scores
+data.final <- data.final %>%
   left_join(construal, by = "article_id") %>%
   group_by(org, year) %>%
   summarize_if(is.numeric, ~ mean(.x, na.rm = TRUE))
@@ -236,6 +246,13 @@ data.final$terror_nr <- data.final$terror_nright /
 
   # Violent crime rate
 data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population_y2/1000))+1)
+
+
+
+temp <- left_join(pre.meta, wno_data[,c("population_y2","per_repub1_dup",
+                                        "reform","logvocality_dup",
+                                        "word_count_dup","admin42")],
+                  by = "")
 
 
 
