@@ -1,7 +1,5 @@
-
-
-plm(immigration ~ log(terror_nright+1)*construal_style*p2001 + discursive_style + word_count +
-      per_repub + factor(admin) + factor(reform) + vcrime_rate,
+plm(immigration ~ construal_style*terror + discursive_style +
+      factor(admin),
     data = wno_data,
     index = c("org","year"),
     model = "within") %>%
@@ -9,45 +7,65 @@ plm(immigration ~ log(terror_nright+1)*construal_style*p2001 + discursive_style 
 
 
 wno_data$sd_log_terror <- scale(log(wno_data$terror_nright+1))
+wno_data$sd_construal <- scale(wno_data$construal_style)
+wno_data$hisp_pop <- wno_data$population * wno_data$hisp_interprop
+wno_data$sd_log_hisppop <- scale(log(wno_data$hisp_pop))
 
-model <- plm(immigration ~ sd_log_terror*hisp_inter + discursive_style + word_count,
+model <- plm(immigration ~ sd_log_terror*sd_log_hisppop + discursive_style + word_count +
+               per_repub + factor(admin) + factor(reform) + vcrime_rate,
              data = wno_data,
              index = c("org","year"),
-             model = "within") 
+             model = "within") |> summary()
 
-model2 <- plm(immigration ~ sd_log_terror*hisp_inter*p2001 + discursive_style + word_count,
-             data = wno_data,
-             index = c("org","year"),
-             model = "within") 
+model2 <- plm(immigration ~ sd_log_terror*sd_construal*p2001 + discursive_style + word_count +
+                per_repub + factor(admin) + factor(reform) + vcrime_rate,
+              data = wno_data,
+              index = c("org","year"),
+              model = "within")
 
 
 
+model.data <- as.data.frame(model$model)
 
-predictions(model, variables = list(sd_log_terror = seq(-1,1, by  = 1),
-                                            hisp_inter = seq(quantile(wno_data$hisp_inter, .25, na.rm = T),
-                                                             1, by = .5))) %>%
-  rbind(.,
-        predictions(model2, variables = list(stdlagconabst_pol2_dup = seq(-1,1, by  = 1),
-                                             terror_nr = seq(-3,1, by = .5)))) %>%
-  mutate(model_id = c(rep("model", 2970), rep("model2", (tally(.) - 2970)))) %>%
-  select(rowid, predicted, stdlagconabst_pol2_dup, terror_nr, model_id) %>%
+model.data <- model.data %>%
+  rename(admin = `factor.admin.`,
+         reform = `factor.reform.`)
+
+model.data2 <- as.data.frame(model2$model)
+
+model.data2 <- model.data2 %>%
+  rename(admin = `factor.admin.`,
+         reform = `factor.reform.`)
+
+
+predictions(model, variables = list(sd_log_hisppop = seq(-1,1, by = 1),
+                                    sd_log_terror = seq(-1,1, by = 1)),
+            newdata = model.data) %>%
+  # mutate(p2001 = NA) %>%
+  # rbind(.,
+  #       predictions(model2, variables = list(sd_construal = seq(-1,1, by  = 1),
+  #                                            sd_log_terror = seq(-2,2, by = .5),
+  #                                            p2001 = c(0,1)),
+  #                   newdata = model.data2) %>%
+  # # mutate(model_id = c(rep("model", 1650), rep("model2", (tally(.) - 1650)))) %>%
+  select(rowid, predicted, sd_log_hisppop, sd_log_terror) %>%
   mutate(predicted = (exp(predicted)/(1 + exp(predicted)))) %>%
-  group_by(model_id, stdlagconabst_pol2_dup, terror_nr) %>%
+  group_by(sd_log_hisppop, sd_log_terror) %>%
   summarise(predicted_sum = mean(predicted)) %>%
-  ggplot(aes(x = terror_nr, y = predicted_sum, linetype = as.factor(stdlagconabst_pol2_dup))) +
+  ggplot(aes(x = sd_log_terror, y = predicted_sum, linetype = as.factor(sd_log_hisppop))) +
   geom_line() +
   labs(y = '"Borders and Immigration" Grievance Probability',
-       x = "Ratio of Terror Events per 1,000 Non-Hispanic/Latinx County Residents (logged)") +
+       x = "Logged Number of Non-Right Wing Terror Events in County (std)") +
   scale_linetype_discrete(breaks = c(-1,0,1),
-                          labels = c("-1 SD Construal Style",
-                                     "Mean Construal Style",
-                                     "+1 SD Construal Style"),
+                          labels = c("-1 SD Log Hispanic Population in County",
+                                     "Mean SD Log Hispanic Population in County",
+                                     "+1 SD Log Hispanic Population in County"),
                           name = "") +
   theme_bw() +
   theme(axis.title = element_text(face = "bold"),
-        legend.position = "top") +
-  facet_grid(~model_id,
-             labeller = labeller(model_id = labs))
+        legend.position = "top")
+  # facet_grid(~model_id,
+  #            labeller = labeller(model_id = labs))
 
 
 temp$temp_id <- paste0(temp$state, temp$county, temp$year)
