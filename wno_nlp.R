@@ -23,6 +23,7 @@ pacman::p_load(tidyverse,
                udpipe,
                text2map,
                stm,
+               Hmisc,
                install = T)
 
 remotes::install_gitlab("culturalcartography/text2map.dictionaries")
@@ -207,17 +208,21 @@ data.final <- data.final %>%
   group_by(org, year) %>%
   summarize_if(is.numeric, ~ mean(.x, na.rm = TRUE))
 
-  # get rolling mean
-data.final %>% 
+  # get rolling means and then style variables (including discursive style)
+data.final <- data.final %>% 
   arrange(org, year) %>% 
   group_by(org) %>%
-  mutate_at(c("construal"), cummean) %>% 
-  mutate_at(c("construal"), lag) %>% 
-  mutate_at(c("construal"), funs(ifelse(is.na(.), 0, .))) %>% 
+  mutate(construal_rolling = cummean(construal),
+         immigration_rolling = cummean(`2`)) %>% 
+  mutate(construal_style = Hmisc::Lag(construal_rolling, shift = 1),
+         discursive_style = Hmisc::Lag(immigration_rolling, shift = 1),
+         immigration = log(`2`/(1 - `2`)),
+         discursive_style = log(discursive_style/(1 - discursive_style))) %>% 
   arrange(org, year) %>% 
   ungroup()
 
-
+data.final %>%
+  select(org, year, construal_rolling, construal_style, immigration_rolling, discursive_style, immigration)
 
 
 
