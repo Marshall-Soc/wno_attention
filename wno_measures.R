@@ -36,7 +36,7 @@ library(text2map.dictionaries)
 ######################################
 
 data <- readtext(paste0(getwd(), "/TXTs/*"))
-pre.meta <- read.csv("pre_topic_meta.csv", row.names = 1, header = T)
+pre.meta <- readRDS("pre_topic_meta.rds")
 data("concreteness", package = "text2map.dictionaries")
 
 
@@ -61,13 +61,13 @@ data <- data %>%
          text = gsub("[[:digit:]]+", " ", text),
          #remove excess whitespace between words
          text = gsub("[[:space:]]+", " ", text),
-         #remove excess whitespace at begging and end of strings
+         #remove excess whitespace at begining and end of strings
          text = trimws(text))
 
 pre.meta <- pre.meta[order(match(rownames(pre.meta), data$doc_id)),]
-# identical(rownames(pre.meta), data$doc_id) hould be TRUE
+identical(rownames(pre.meta), data$doc_id) #should be true
 
-pre.meta$doc_id <- paste0("doc", 1:nrow(data))
+# pre.meta$doc_id <- paste0("doc", 1:nrow(data))
 
   # Load in English language model for POS and lemmatization
 eng <- udpipe_download_model(language = "english-gum")
@@ -79,7 +79,7 @@ lemmas <- udpipe_annotate(
   as_tibble() %>%
   select(doc_id, lemma) %>%
   group_by(doc_id, lemma) %>%
-  summarize(n = n())
+  dplyr::summarize(n = n())
 
   # Get triplet matrix
 df <- lemmas %>% #This can take a long time
@@ -248,14 +248,12 @@ data.final$terror_nr <- data.final$terror_nright /
 data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population_y2/1000))+1)
 
 
-temp <- pre.meta
+######################################
+#  Vocality
+######################################
 
-temp$temp_id <- paste0(temp$state,temp$county,temp$year)
-wno_data$temp_id <- paste0(wno_data$state,wno_data$county,wno_data$year)
-
-temp <- left_join(temp, wno_data[,c("temp_id","population_y2")], by = "temp_id")
-
-
+# Violent crime rate
+data.final$log_vocality <- log(data.final$vocality+1)
 
 
 
