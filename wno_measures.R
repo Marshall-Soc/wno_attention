@@ -1,6 +1,6 @@
 
 ##############################
-##  wno_topics.R: Code to reproduce NLP-based measures
+##  wno_measures.R: Code to reproduce measures that need computing
 ##  Author: Marshall A. Taylor
 ##############################
 
@@ -154,7 +154,7 @@ data.final <- cbind(meta, wn.stm$theta)
 
 
 ######################################
-#  Construal scores
+#  Style Scores
 ######################################
 
   # Create dictionaries
@@ -221,10 +221,21 @@ data.final <- data.final %>%
   arrange(org, year) %>% 
   ungroup()
 
-data.final %>%
-  select(org, year, construal_rolling, construal_style, immigration_rolling, discursive_style, immigration)
+
+######################################
+#  Environmental Shock Variable
+######################################
+
+data.final$terror_nr <- data.final$terror_nright / 
+  (data.final$population_y2 * (1 - data.final$hisp_inter))
 
 
+######################################
+#  Violent Crime Rate Variable
+######################################
+
+  # Violent crime rate
+data.final$vcrime_rate <- log((data.final$vcrime/(data.final$population_y2/1000))+1)
 
 
 
