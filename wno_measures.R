@@ -36,6 +36,10 @@ library(text2map.dictionaries)
 ######################################
 
 data <- readtext(paste0(getwd(), "/TXTs/*"))
+  # Not sure why doc_id sometimes gets duplicated, but below fixes it if it happens
+# data$doc_id <- gsub(".*/", "", data$doc_id)
+# data <- unique(data)
+
 pre.meta <- readRDS("pre_topic_meta.rds")
 data("concreteness", package = "text2map.dictionaries")
 
