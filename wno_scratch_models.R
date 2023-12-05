@@ -6,12 +6,12 @@ plm(immigration ~ construal_style*terror + discursive_style +
   summary()
 
 
-wno_data$sd_log_terror <- scale(log(wno_data$terror_nright+1))
+wno_data$log_terror <- log(wno_data$terror_nright+1)
 wno_data$sd_construal <- scale(wno_data$construal_style)
 wno_data$hisp_pop <- wno_data$population * wno_data$hisp_interprop
-wno_data$sd_log_hisppop <- scale(log(wno_data$hisp_pop))
+wno_data$log_hisppop <- log(wno_data$hisp_pop)
 
-model <- plm(immigration ~ sd_log_terror*sd_log_hisppop + discursive_style + word_count +
+model <- plm(immigration ~ log_terror*log_hisppop + discursive_style + word_count +
                per_repub + factor(admin) + factor(reform) + vcrime_rate,
              data = wno_data,
              index = c("org","year"),
@@ -38,8 +38,15 @@ model.data2 <- model.data2 %>%
          reform = `factor.reform.`)
 
 
-predictions(model, variables = list(sd_log_hisppop = seq(-1,1, by = 1),
-                                    sd_log_terror = seq(-1,1, by = 1)),
+
+
+
+predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
+                                                     quantile(wno_data$log_terror, .75, na.rm = T))
+                                                     by = .25),
+                                    log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
+                                                    quantile(wno_data$log_hisppop, .5, na.rm = T),
+                                                    quantile(wno_data$log_hisppop, .75, na.rm = T))),
             newdata = model.data) %>%
   # mutate(p2001 = NA) %>%
   # rbind(.,

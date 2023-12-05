@@ -113,9 +113,9 @@ dtm <- removeSparseTerms(dtm, 0.6)
 
   #Prep for STM
 pre.meta <- pre.meta[order(match(pre.meta$doc_id, rownames(dtm))),]
-identical(pre.meta$doc_id, rownames(dtm)) #should be TRUE
+# identical(pre.meta$doc_id, rownames(dtm)) #should be TRUE
 
-# out <- readCorpus(dtm, type = "slam")
+out <- readCorpus(dtm, type = "slam")
 out <- prepDocuments(out$documents, out$vocab, pre.meta)
 docs <- out$documents
 vocab <- out$vocab
@@ -151,7 +151,7 @@ plot(wn.stm, type = "summary", n = 5, main = "", labeltype = "prob")
 sageLabels(wn.stm) #Topic #2 = Borders and Immigration
 
 data <- data[order(match(data$doc_id, rownames(pre.meta))),]
-# identical(data$doc_id, rownames(pre.meta)) should be TRUE
+# identical(data$doc_id, rownames(pre.meta)) #Should be TRUE
 
 findThoughts(wn.stm, texts = as.character(data$text),
              n = 3, topics = 2) #Topic #2 = Borders and Immigration
