@@ -12,10 +12,14 @@ wno_data$hisp_pop <- wno_data$population * wno_data$hisp_interprop
 wno_data$log_hisppop <- log(wno_data$hisp_pop)
 
 model <- plm(immigration ~ log_terror*log_hisppop + discursive_style + word_count +
-               per_repub + factor(admin) + factor(reform) + vcrime_rate,
+               per_repub + factor(admin) + factor(reform) + vcrime_rate + log_vocality + p2001,
              data = wno_data,
              index = c("org","year"),
              model = "within") |> summary()
+
+perm_table(data = wno_data, model = model,
+                  perm_v = "immigration", statistic = "coefficients", 
+                  strata_v = "org", seed = 123)
 
 model2 <- plm(immigration ~ sd_log_terror*sd_construal*p2001 + discursive_style + word_count +
                 per_repub + factor(admin) + factor(reform) + vcrime_rate,
@@ -42,12 +46,14 @@ model.data2 <- model.data2 %>%
 
 
 predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
-                                                     quantile(wno_data$log_terror, .75, na.rm = T))
+                                                     quantile(wno_data$log_terror, .75, na.rm = T),
                                                      by = .25),
                                     log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
                                                     quantile(wno_data$log_hisppop, .5, na.rm = T),
                                                     quantile(wno_data$log_hisppop, .75, na.rm = T))),
             newdata = model.data) %>%
+  mutate(log_terror = (exp(log_terror)-1),
+         log_hisppop = exp(log_hisppop)) %>%
   # mutate(p2001 = NA) %>%
   # rbind(.,
   #       predictions(model2, variables = list(sd_construal = seq(-1,1, by  = 1),
@@ -55,18 +61,20 @@ predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terro
   #                                            p2001 = c(0,1)),
   #                   newdata = model.data2) %>%
   # # mutate(model_id = c(rep("model", 1650), rep("model2", (tally(.) - 1650)))) %>%
-  select(rowid, predicted, sd_log_hisppop, sd_log_terror) %>%
+  select(rowid, predicted, log_hisppop, log_terror) %>%
   mutate(predicted = (exp(predicted)/(1 + exp(predicted)))) %>%
-  group_by(sd_log_hisppop, sd_log_terror) %>%
+  group_by(log_hisppop, log_terror) %>%
   summarise(predicted_sum = mean(predicted)) %>%
-  ggplot(aes(x = sd_log_terror, y = predicted_sum, linetype = as.factor(sd_log_hisppop))) +
+  ggplot(aes(x = log_terror, y = predicted_sum, linetype = as.factor(log_hisppop))) +
   geom_line() +
   labs(y = '"Borders and Immigration" Grievance Probability',
-       x = "Logged Number of Non-Right Wing Terror Events in County (std)") +
-  scale_linetype_discrete(breaks = c(-1,0,1),
-                          labels = c("-1 SD Log Hispanic Population in County",
-                                     "Mean SD Log Hispanic Population in County",
-                                     "+1 SD Log Hispanic Population in County"),
+       x = "Number of Non-Right Wing Terror Threats or Attacks in County") +
+  # scale_x_continuous(trans = scales::log_trans()) +
+  # coord_trans(x = "log") +
+  scale_linetype_discrete(#breaks = c(-1,0,1),
+                          labels = c(expression("25"^{th}~"Percentile Hispanic Population in County"),
+                                     "Median Hispanic Population in County",
+                                     expression("75"^{th}~"Percentile Hispanic Population in County")),
                           name = "") +
   theme_bw() +
   theme(axis.title = element_text(face = "bold"),
