@@ -68,7 +68,7 @@ predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terro
   ggplot(aes(x = log_terror, y = predicted_sum, linetype = as.factor(log_hisppop))) +
   geom_line() +
   labs(y = '"Borders and Immigration" Grievance Probability',
-       x = "Number of Non-Right Wing Terror Threats or Attacks in County") +
+       x = "Number of Non-Right Wing Terror Threats or Attacks in U.S. in Previous Year") +
   # scale_x_continuous(trans = scales::log_trans()) +
   # coord_trans(x = "log") +
   scale_linetype_discrete(#breaks = c(-1,0,1),
