@@ -252,11 +252,15 @@ data.final <- data.final %>%
 
 
 ######################################
-#  Environmental Shock Variable
+#  Environmental Shock Variables
 ######################################
 
-data.final$terror_nr <- data.final$terror_nright / 
-  (data.final$population * (1 - data.final$hisp_inter))
+  #Logged number of terror threats/attacks in U.S. in previous year
+data.final$log_terror <- log(data.final$terror_nright+1)
+  
+  #Logged estimated size of Hispanic/Latinx population in county
+data.final$hisp_pop <- data.final$population * data.final$hisp_interprop
+data.final$log_hisppop <- log(data.final$hisp_pop)
 
 
 ######################################
