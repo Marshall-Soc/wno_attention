@@ -97,14 +97,14 @@ freq_table(as.data.frame(doc_type), doc_type)
       #and the envr*construal interaction
 model <- plm(immigration ~ log_terror*log_hisppop + discursive_style +
                per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
-               p2001 + factor(admin),
+               word_count + factor(admin),
              data = wno_data,
              index = c("org","year"),
              model = "within")
 
-mat <- perm_table(data = wno_data, model = model,
-                  perm_v = "immigration", statistic = "coefficients", 
-                  strata_v = "org", seed = 123)
+mat <- perm_tester(data = wno_data, model = model,
+                  perm_var = "immigration", statistic = "coefficients", 
+                  strat_var = "org", seed = 123)
 
 
 ######################################
@@ -118,7 +118,8 @@ labels <- c("U.S. Terror Threats/Attacks (logged)","Hispanic Population (logged)
             "Violent Crime Rate in County (logged)","Immigration Legislation",
             "Pre-2001 Publication","Writer Heterogeneity (logged)",
             "(Mean) Word Count","Reagan Administration",
-            "H.W. Bush Administration","W. Bush Administration")
+            "H.W. Bush Administration","W. Bush Administration",
+            "Terror \u00D7 Hispanic")
 
 coefs <- mat$stat %>% round(3)
 coefs.lab <- list()
@@ -131,9 +132,9 @@ for (i in coefs) {
 }
 
 fig2 <- mat %>%
-  ggplot(aes(x = var, y = Pt)) +
+  ggplot(aes(x = var, y = P_two)) +
   geom_col(color = "black", fill = "gray50") +
-  geom_errorbar(aes(ymin = CIt_l, ymax = CIt_u), width = 0.1) +
+  geom_errorbar(aes(ymin = CI_two_lo, ymax = CI_two_up), width = 0.1) +
   geom_text(aes(label = coefs.lab), parse = T, hjust = -.75) +
   geom_hline(yintercept = 0.05, linetype = "dashed") +
   labs(x = "", y = expression(bold(paste("Two-Tailed ", italic("P"), "-Values")))) +
@@ -168,14 +169,14 @@ wno_data2 <- wno_data[wno_data$year != 2002,] #Removing 2002 org-years
 
 model2 <- plm(immigration ~ log_terror*log_hisppop + discursive_style +
                 per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
-                p2001 + factor(admin),
+                word_count + factor(admin),
               data = wno_data2,
               index = c("org","year"),
               model = "within") #the model with 2002 org-years removed
 
-mat2 <- perm_table(data = wno_data2, model = model2,
-                  perm_v = "immigration", statistic = "coefficients",
-                  strata_v = "org", seed = 123)
+mat2 <- perm_tester(data = wno_data2, model = model2,
+                  perm_var = "immigration", statistic = "coefficients",
+                  strat_var = "org", seed = 123)
 
 labs <- c("2002 Org-Years Included","2002 Org-Years Not Included")
 names(labs) <- c("model","model2")
@@ -243,14 +244,14 @@ dev.off()
 
 model3 <- plm(immigration ~ log_terror*log_hisppop*p2001 + discursive_style +
                per_repub + vcrime_rate + factor(reform) + log_vocality + 
-               p2001 + factor(admin),
+               word_count + factor(admin),
              data = wno_data,
              index = c("org","year"),
              model = "within")
 
-mat3 <- perm_table(data = wno_data, model = model,
-                  perm_v = "immigration", statistic = "coefficients", 
-                  strata_v = "org", seed = 123)
+mat3 <- perm_tester(data = wno_data, model = model,
+                  perm_var = "immigration", statistic = "coefficients", 
+                  strat_var = "org", seed = 123)
 
 model.data3 <- as.data.frame(model3$model)
 
@@ -352,50 +353,37 @@ freq_table(wno_data, admin)
 
 #Models 1 and 2 in Table 5 of the Appendix
   #Model 1
-model.1 <- plm(immigration ~ log_terror,
+model.1 <- plm(immigration ~ log_terror*log_hisppop,
                data = wno_data,
                index = c("org","year"),
                model = "within")
 
-mat.1 <- perm_table(data = wno_data, model = model.1,
-                  perm_v = "immigration", statistic = "coefficients", 
-                  strata_v = "org", seed = 123)
-
-  #Model 2
-model.2 <- plm(immigration ~ log_terror*log_hisppop,
-               data = wno_data,
-               index = c("org","year"),
-               model = "within")
-
-mat.2 <- perm_table(data = wno_data, model = model.2,
-                    perm_v = "immigration", statistic = "coefficients",
-                    strata_v = "org", seed = 123)
+mat.1 <- perm_tester(data = wno_data, model = model.1,
+                    perm_var = "immigration", statistic = "coefficients",
+                    strat_var = "org", seed = 123)
 
   #Fit statistics for all models
 fit <- list(
-  feols(immigration ~ log_terror | org, data = wno_data),
   feols(immigration ~ log_terror*log_hisppop | org, data = wno_data),
   feols(immigration ~ log_terror*log_hisppop + discursive_style +
           per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
-          p2001 + factor(admin) | org, data = wno_data)
+          word_count + factor(admin) | org, data = wno_data)
 )
 
 lapply(fit, r2) #r2, adj r2, within-r2, adj within-r2
 lapply(fit, function(x) sd(wno_data$immigration - x$fitted.values)) #rmse
 
 fit.2 <- list(
-  feols(lo_immigrant_dup ~ stdlagconabst_pol2_dup*terror_nr + laglo_immigrant_dup +
-          per_repub1_dup + lo_vcrime_rate + factor(reform) +
-          factor(p2001) + logvocality_dup + word_count_dup +
-          factor(admin42) | org2, data = wno_data3),
-  feols(lo_immigrant_dup ~ stdlagconabst_pol2_dup*terror_nr*factor(p2001) + 
-          laglo_immigrant_dup + per_repub1_dup + lo_vcrime_rate + 
-          factor(reform) + logvocality_dup + word_count_dup +
-          factor(admin42) | org2, data = wno_data)
+  feols(immigration ~ log_terror*log_hisppop + discursive_style +
+          per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
+          word_count + factor(admin) | org, data = wno_data2),
+  feols(immigration ~ log_terror*log_hisppop*p2001 + discursive_style +
+          per_repub + vcrime_rate + factor(reform) + log_vocality + 
+          word_count + factor(admin) | org, data = wno_data)
 )
 
 lapply(fit.2, r2) #r2, adj r2, within-r2, adj within-r2
-lapply(fit.2, function(x) sd(wno_data$lo_immigrant_dup - x$fitted.values)) #rmse
+lapply(fit.2, function(x) sd(wno_data$immigration - x$fitted.values)) #rmse
 
 
 ### END ###
