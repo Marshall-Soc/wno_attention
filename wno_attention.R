@@ -332,7 +332,7 @@ ugm <- wno_data %>%
   theme_bw() +
   theme(strip.text = element_text(size = 6))
 
-png("figures/ugm.png", res = 750, height = 6, width = 8, units = "in")
+png("figures/ugm.png", res = 750, height = 10, width = 13, units = "in")
   ugm
 dev.off()
 
