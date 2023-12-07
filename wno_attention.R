@@ -18,8 +18,6 @@ pacman::p_load(tidyverse, plm, permute, data.table,
                fixest, modelsummary,
                install = T)
 
-source("perm_table.R") #function to perform stratified Monte Carlo permutation tests
-
 
 ######################################
 #  Data
