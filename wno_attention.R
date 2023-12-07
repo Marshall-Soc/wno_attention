@@ -90,9 +90,6 @@ freq_table(as.data.frame(doc_type), doc_type)
 #  Main Model
 ######################################
   
-  #Note: Two other models are in the appendix section below: one with just
-      #the environmental shock DV, and another that adds construal style
-      #and the envr*construal interaction
 model <- plm(immigration ~ log_terror*log_hisppop + discursive_style +
                per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
                word_count + factor(admin),
