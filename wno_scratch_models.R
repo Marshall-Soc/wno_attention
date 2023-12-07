@@ -1,3 +1,5 @@
+#Clean this all up!
+
 plm(immigration ~ construal_style*terror + discursive_style +
       factor(admin),
     data = wno_data,
