@@ -247,7 +247,7 @@ model3 <- plm(immigration ~ log_terror*log_hisppop*p2001 + discursive_style +
              index = c("org","year"),
              model = "within")
 
-mat3 <- perm_tester(data = wno_data, model = model,
+mat3 <- perm_tester(data = wno_data, model = model3,
                   perm_var = "immigration", statistic = "coefficients", 
                   strat_var = "org", seed = 123)
 
