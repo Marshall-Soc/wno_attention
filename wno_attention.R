@@ -15,7 +15,7 @@
 pacman::p_load(tidyverse, plm, permute, data.table, 
                marginaleffects, ggpubr, forcats,
                freqtables, lme4, broom.mixed, psych,
-               fixest, modelsummary,
+               fixest, modelsummary, text2map,
                install = T)
 
 

@@ -148,13 +148,13 @@ colMeans(wn.stm$theta) #marginal topic probabilities
 
 plot(wn.stm, type = "summary", n = 5, main = "", labeltype = "prob")
 
-sageLabels(wn.stm) #Topic #2 = Borders and Immigration
+sageLabels(wn.stm, 10) #Topic #2 = Borders and Immigration
 
 data <- data[order(match(data$doc_id, rownames(pre.meta))),]
 # identical(data$doc_id, rownames(pre.meta)) #Should be TRUE
 
 findThoughts(wn.stm, texts = as.character(data$text),
-             n = 3, topics = 2) #Topic #2 = Borders and Immigration
+             n = 3, topics = 8) #Topic #2 = Borders and Immigration
 
   # Add topic proportions to dataset
 data.final <- cbind(meta, wn.stm$theta)
