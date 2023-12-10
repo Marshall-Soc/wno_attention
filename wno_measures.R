@@ -129,13 +129,17 @@ wn_modelk <- searchK(docs, vocab, K = seq(2, 20, by = 1), N = 50,
                      data = meta)
 
 plot(wn_modelk)
-ggplot(data = wn_modelk$results, aes(x = as.numeric(semcoh), y = as.numeric(exclus))) +
+sc.exc <- ggplot(data = wn_modelk$results, aes(x = as.numeric(semcoh), y = as.numeric(exclus))) +
   geom_text(aes(label = K)) +
   xlab("Semantic Coherence") +
   ylab("Exclusivity") +
   theme_bw() +
   theme(axis.title = element_text(face = "bold"),
         panel.grid = element_blank()) #ideal statistical fit = 8-ish
+
+png("figures/sc_exc.png", res = 750, height = 4, width = 6, units = "in")
+  sc.exc
+dev.off()
 
   # Get model
 wn.stm <- stm(docs, vocab, K = 8,

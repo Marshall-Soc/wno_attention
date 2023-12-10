@@ -18,6 +18,8 @@ pacman::p_load(tidyverse, plm, permute, data.table,
                fixest, modelsummary, text2map,
                install = T)
 
+source("perm_table.R")
+
 
 ######################################
 #  Data
@@ -111,7 +113,7 @@ mat$var <- factor(mat$rowname, levels = rev(mat$rowname))
 labels <- c("U.S. Terror Threats/Attacks (logged)","Hispanic Population (logged)",
             "Discursive Style (logit-transformed)","% Republican Voting in County",
             "Violent Crime Rate in County (logged)","Immigration Legislation",
-            "Pre-2001 Publication","Writer Heterogeneity (logged)",
+            "Post-2001 Publication","Writer Heterogeneity (logged)",
             "(Mean) Word Count","Reagan Administration",
             "H.W. Bush Administration","W. Bush Administration",
             "Terror \u00D7 Hispanic")
@@ -337,28 +339,43 @@ dev.off()
 vars.con <- c("immigration","log_terror","log_hisppop",
                "discursive_style","per_repub","vcrime_rate",
                "log_vocality","word_count")
-describe(wno_data[vars.con])
+describe(model.data[vars.con])
+apply(model.data[vars.con], 2, quantile, probs = .25)
+apply(model.data[vars.con], 2, quantile, probs = .75)
 
   #For categorical variables, dummy
-vars.cat <- c("reform","p2001")
-apply(wno_data[vars.cat], 2, mean)
+mean(as.numeric(model.data$reform)-1)
+mean(as.numeric(model.data$p2001))
 
   #For categorical variables, multiple categories
-freq_table(wno_data, admin)
+freq_table(model.data, admin)
 
 #Models 1 and 2 in Table 5 of the Appendix
   #Model 1
-model.1 <- plm(immigration ~ log_terror*log_hisppop,
+model.1 <- plm(immigration ~ log_terror,
                data = wno_data,
                index = c("org","year"),
                model = "within")
 
-mat.1 <- perm_tester(data = wno_data, model = model.1,
+mat.1 <- perm_table(data = wno_data, model = model.1,
+                     perm_v = "immigration", statistic = "coefficients",
+                     strata_v = "org", seed = 123) #Need perm_table() instead of
+                                              #text2map::perm_tester() here to get
+                                              #results for a bivariate FE model
+                                              #with no intercept
+  #Model 2
+model.2 <- plm(immigration ~ log_terror*log_hisppop,
+               data = wno_data,
+               index = c("org","year"),
+               model = "within")
+
+mat.2 <- perm_tester(data = wno_data, model = model.2,
                     perm_var = "immigration", statistic = "coefficients",
                     strat_var = "org", seed = 123)
 
   #Fit statistics for all models
 fit <- list(
+  feols(immigration ~ log_terror | org, data = wno_data),
   feols(immigration ~ log_terror*log_hisppop | org, data = wno_data),
   feols(immigration ~ log_terror*log_hisppop + discursive_style +
           per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
