@@ -103,7 +103,7 @@ dtm <- df %>%
     weighting = tm::weightTf
   )
 
-  # remove sparse terms with .4 factor
+  # remove sparse terms
 dtm <- removeSparseTerms(dtm, 0.6) 
 
 

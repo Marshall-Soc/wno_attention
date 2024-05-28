@@ -27,6 +27,8 @@ source("perm_table.R")
 
 doc_type <- readRDS("doc_type.rds") #Doc type for all 384 docs (for frequency table)
 
+meta <- readRDS("meta.rds")
+
 desc9708 <- read.csv("group_desc.csv", header = T) %>%
   pivot_longer(cols = KKK:White.Nationalist) #for the intro figure
 
@@ -52,7 +54,7 @@ fig0 <- ggplot(data = desc9708, aes(x = Year, y = value, group = name, colour = 
                       values = c("#1696d2","#fdbf11","#ec008b",
                                "#55b748","#5c5859","#db2b27")) 
 
-png("figures/fig0.png", res = 750, height = 6, width = 8, units = "in")
+ggsave("figures/fig0.jpeg", dpi = 300, height = 6, width = 8, units = "in")
   fig0
 dev.off()
 
@@ -76,7 +78,7 @@ fig1 <- meta %>%
   theme(axis.title.y = element_text(face = "bold")) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2))
 
-png("figures/fig1.png", res = 750, height = 6, width = 12, units = "in")
+ggsave("figures/fig1.jpeg", dpi = 300, height = 6, width = 12, units = "in")
   fig1
 dev.off()
 
@@ -149,7 +151,7 @@ fig2 <- mat %>%
                                 "0.25", "0.50", "0.75", "1.00")) +
   coord_flip()
 
-png("figures/fig2.png", res = 750, height = 6, width = 12, units = "in")
+ggsave("figures/fig2.jpeg", dpi = 600, height = 6, width = 12, units = "in")
   fig2
 dev.off()
 
@@ -227,13 +229,13 @@ fig3 <- predictions(model, variables = list(log_terror = seq(quantile(wno_data$l
   facet_grid(~model_id,
            labeller = labeller(model_id = labs))
 
-png("figures/fig3.png", res = 750, height = 6, width = 12, units = "in")
+ggsave("figures/fig3.jpeg", dpi = 600, height = 6, width = 12, units = "in")
   fig3
 dev.off()
 
 
 ######################################
-#  Figure #5
+#  Figure #5 (NOT IN PAPER)
 ######################################
 
   #Note: This is the other 9/11 robustness check, where, instead of removing
@@ -296,7 +298,7 @@ fig7 <- predictions(model3, variables = list(log_terror = seq(quantile(wno_data$
         legend.box = "vertical",
         legend.direction = "horizontal")
 
-png("figures/fig7.png", res = 750, height = 6, width =8, units = "in")
+ggsave("figures/fig7.jpeg", dpi = 300, height = 6, width = 8, units = "in")
   fig7
 dev.off()
 
@@ -329,7 +331,7 @@ ugm <- wno_data %>%
   theme_bw() +
   theme(strip.text = element_text(size = 6))
 
-png("figures/ugm.png", res = 750, height = 10, width = 13, units = "in")
+ggsave("figures/ugm.jpeg", dpi = 600, height = 10, width = 13, units = "in")
   ugm
 dev.off()
 
