@@ -25,14 +25,14 @@ source("scripts/perm_table.R")
 #  Data
 ######################################
 
-doc_type <- readRDS("doc_type.rds") #Doc type for all 384 docs (for frequency table)
+doc_type <- readRDS("data/doc_type.rds") #Doc type for all 384 docs (for frequency table)
 
-meta <- readRDS("meta.rds")
+meta <- readRDS("data/meta.rds")
 
-desc9708 <- read.csv("group_desc.csv", header = T) %>%
+desc9708 <- read.csv("data/group_desc.csv", header = T) %>%
   pivot_longer(cols = KKK:White.Nationalist) #for the intro figure
 
-wno_data <- readRDS("wno_data.rds") #Main data, processed and ready to go
+wno_data <- readRDS("data/wno_data.rds") #Main data, processed and ready to go
                                 #See wno_measures.R for how to construct main vars
 
 
