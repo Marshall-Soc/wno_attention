@@ -18,7 +18,7 @@ pacman::p_load(tidyverse, plm, permute, data.table,
                fixest, modelsummary, text2map,
                install = T)
 
-source("perm_table.R")
+source("scripts/perm_table.R")
 
 
 ######################################
@@ -33,13 +33,14 @@ desc9708 <- read.csv("group_desc.csv", header = T) %>%
   pivot_longer(cols = KKK:White.Nationalist) #for the intro figure
 
 wno_data <- readRDS("wno_data.rds") #Main data, processed and ready to go
+                                #See wno_measures.R for how to construct main vars
 
 
 ######################################
 #  Figure #1
 ######################################
 
-fig0 <- ggplot(data = desc9708, aes(x = Year, y = value, group = name, colour = name)) +
+fig1 <- ggplot(data = desc9708, aes(x = Year, y = value, group = name, colour = name)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
   scale_x_continuous(breaks = seq(1997, 2008, 2)) +
@@ -54,16 +55,16 @@ fig0 <- ggplot(data = desc9708, aes(x = Year, y = value, group = name, colour = 
                       values = c("#1696d2","#fdbf11","#ec008b",
                                "#55b748","#5c5859","#db2b27")) 
 
-ggsave("figures/fig0.jpeg", dpi = 300, height = 6, width = 8, units = "in")
-  fig0
+ggsave("figures/fig1.jpeg", dpi = 300, height = 6, width = 8, units = "in")
+  fig1
 dev.off()
 
 
 ######################################
-#  Figure #1
+#  Figure #2
 ######################################
 
-fig1 <- meta %>%
+fig2 <- meta %>%
   group_by(state, org) %>%
   dplyr::summarize(sum = 1) %>%
   ungroup() %>%
@@ -78,8 +79,8 @@ fig1 <- meta %>%
   theme(axis.title.y = element_text(face = "bold")) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2))
 
-ggsave("figures/fig1.jpeg", dpi = 300, height = 6, width = 12, units = "in")
-  fig1
+ggsave("figures/fig2.jpeg", dpi = 300, height = 6, width = 12, units = "in")
+  fig2
 dev.off()
 
 
@@ -130,7 +131,7 @@ for (i in coefs) {
   
 }
 
-fig2 <- mat %>%
+fig3 <- mat %>%
   ggplot(aes(x = var, y = P_two)) +
   geom_col(color = "black", fill = "gray50") +
   geom_errorbar(aes(ymin = CI_two_lo, ymax = CI_two_up), width = 0.1) +
@@ -151,8 +152,8 @@ fig2 <- mat %>%
                                 "0.25", "0.50", "0.75", "1.00")) +
   coord_flip()
 
-ggsave("figures/fig2.jpeg", dpi = 600, height = 6, width = 12, units = "in")
-  fig2
+ggsave("figures/fig3.jpeg", dpi = 600, height = 6, width = 12, units = "in")
+  fig3
 dev.off()
 
 
@@ -192,7 +193,7 @@ model.data2 <- model.data2 %>%
   rename(admin = `factor.admin.`,
          reform = `factor.reform.`)
 
-fig3 <- predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
+fig4 <- predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
                                                              quantile(wno_data$log_terror, .75, na.rm = T),
                                                              by = .25),
                                             log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
@@ -229,13 +230,13 @@ fig3 <- predictions(model, variables = list(log_terror = seq(quantile(wno_data$l
   facet_grid(~model_id,
            labeller = labeller(model_id = labs))
 
-ggsave("figures/fig3.jpeg", dpi = 600, height = 6, width = 12, units = "in")
-  fig3
+ggsave("figures/fig4.jpeg", dpi = 600, height = 6, width = 12, units = "in")
+  fig4
 dev.off()
 
 
 ######################################
-#  Figure #5 (NOT IN PAPER)
+#  Figure #5 (NOT IN PAPER, but model is referenced)
 ######################################
 
   #Note: This is the other 9/11 robustness check, where, instead of removing
@@ -261,7 +262,7 @@ model.data3 <- model.data3 %>%
 labs2 <- c("Pre-9/11","Post-9/11")
 names(labs2) <- c("0","1")
 
-fig7 <- predictions(model3, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
+fig5 <- predictions(model3, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
                                                              quantile(wno_data$log_terror, .75, na.rm = T),
                                                              by = .25),
                                             log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
@@ -298,8 +299,8 @@ fig7 <- predictions(model3, variables = list(log_terror = seq(quantile(wno_data$
         legend.box = "vertical",
         legend.direction = "horizontal")
 
-ggsave("figures/fig7.jpeg", dpi = 300, height = 6, width = 8, units = "in")
-  fig7
+ggsave("figures/fig5.jpeg", dpi = 300, height = 6, width = 8, units = "in")
+  fig5
 dev.off()
 
 
@@ -331,7 +332,7 @@ ugm <- wno_data %>%
   theme_bw() +
   theme(strip.text = element_text(size = 6))
 
-ggsave("figures/ugm.jpeg", dpi = 600, height = 10, width = 13, units = "in")
+ggsave("figures/app_ugm.jpeg", dpi = 600, height = 10, width = 13, units = "in")
   ugm
 dev.off()
 

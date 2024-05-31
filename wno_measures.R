@@ -26,10 +26,6 @@ pacman::p_load(tidyverse,
                Hmisc,
                install = T)
 
-remotes::install_gitlab("culturalcartography/text2map.dictionaries")
-
-library(text2map.dictionaries)
-
 
 ######################################
 #  Data
@@ -39,9 +35,6 @@ data <- readtext(paste0(getwd(), "/TXTs/*"))
   # Not sure why doc_id sometimes gets duplicated, but below fixes it if it happens
 # data$doc_id <- gsub(".*/", "", data$doc_id)
 # data <- unique(data)
-
-pre.meta <- readRDS("pre_topic_meta.rds")
-data("concreteness", package = "text2map.dictionaries")
 
 
 ######################################
@@ -162,97 +155,6 @@ findThoughts(wn.stm, texts = as.character(data$text),
 
   # Add topic proportions to dataset
 data.final <- cbind(meta, wn.stm$theta)
-
-
-######################################
-#  Style Scores
-######################################
-
-  # Create dictionaries
-concrete <- concreteness %>%
-  filter(concrete_mean >= median(concrete_mean)) %>%
-  select(term)
-
-abstract <- concreteness %>%
-  filter(concrete_mean < median(concrete_mean)) %>%
-  select(term)
-
-  # Create non-lemmatized DTM
-df.nolemma <- data %>%
-  unnest_tokens(word, text) %>%
-  filter(!nchar(word) <= 2) %>%
-  anti_join(stop_words) %>%
-  filter(!(word %in% c("page")))
-
-  # get DTM
-dtm.nolemma <- df.nolemma %>%
-  group_by(doc_id, word) %>%
-  dplyr::summarize(n = n()) %>%
-  cast_dtm(
-    document = doc_id,
-    term = word,
-    value = n,
-    weighting = tm::weightTf
-  )
-
-# remove sparse terms with .4 factor
-dtm.nolemma <- removeSparseTerms(dtm.nolemma, 0.6) 
-
-  # Get scores
-word.concrete <- intersect(colnames(dtm.nolemma), concrete$term)
-word.abstract <- intersect(colnames(dtm.nolemma), abstract$term)
-
-dtm.concrete <- dtm.nolemma[, word.concrete]
-dtm.abstract <- dtm.nolemma[, word.abstract]
-
-concrete.sum <- rowSums(as.matrix(dtm.concrete))
-abstract.sum <- rowSums(as.matrix(dtm.abstract))
-
-construal <- (concrete.sum - abstract.sum) / (concrete.sum + abstract.sum)
-
-construal <- as.data.frame(construal) %>%
-  rownames_to_column(var = "article_id")
-
-  # Get word counts
-word.count <- rowSums(as.matrix(dtm.nolemma)) %>%
-  as.data.frame() %>%
-  rownames_to_column(var = "article_id") %>%
-  rename("word_count" = 2)
-
-data.final <- data.final %>%
-  rownames_to_column(var = "article_id") %>%
-  left_join(word.count, by = "article_id")
-
-  # temporarily convernt admin to numeric
-data.final$admin <- recode(data.final$admin, Reagan = 1,
-         HWBush = 2,
-         Clinton = 3,
-         WBush = 4)
-
-  # Add construal scores
-data.final <- data.final %>%
-  left_join(construal, by = "article_id") %>%
-  group_by(org, year) %>%
-  summarize_if(is.numeric, ~ mean(.x, na.rm = TRUE))
-
-  # Take admin back to factor
-data.final$admin <- recode(data.final$admin, `1` = "Reagan",
-                           `2` = "HWBush",
-                           `3` = "Clinton",
-                           `4` = "WBush")
-
-  # get rolling means and then style variables (including discursive style)
-data.final <- data.final %>% 
-  arrange(org, year) %>% 
-  group_by(org) %>%
-  mutate(construal_rolling = cummean(construal),
-         immigration_rolling = cummean(`2`)) %>% 
-  mutate(construal_style = Hmisc::Lag(construal_rolling, shift = 1),
-         discursive_style = Hmisc::Lag(immigration_rolling, shift = 1),
-         immigration = log(`2`/(1 - `2`)),
-         discursive_style = log(discursive_style/(1 - discursive_style))) %>% 
-  arrange(org, year) %>% 
-  ungroup()
 
 
 ######################################
