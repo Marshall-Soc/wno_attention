@@ -95,7 +95,7 @@ freq_table(as.data.frame(doc_type), doc_type)
 #  Main Model
 ######################################
   
-model <- plm(immigration ~ log_terror*log_hisppop + discursive_style +
+model <- plm(immigration ~ log_terror*log_hisppop2 + discursive_style +
                per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
                word_count + factor(admin),
              data = wno_data,
@@ -167,7 +167,7 @@ dev.off()
 
 wno_data2 <- wno_data[wno_data$year != 2002,] #Removing 2002 org-years
 
-model2 <- plm(immigration ~ log_terror*log_hisppop + discursive_style +
+model2 <- plm(immigration ~ log_terror*log_hisppop2 + discursive_style +
                 per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
                 word_count + factor(admin),
               data = wno_data2,
@@ -196,26 +196,26 @@ model.data2 <- model.data2 %>%
 fig4 <- predictions(model, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
                                                              quantile(wno_data$log_terror, .75, na.rm = T),
                                                              by = .25),
-                                            log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
-                                                            quantile(wno_data$log_hisppop, .5, na.rm = T),
-                                                            quantile(wno_data$log_hisppop, .75, na.rm = T))),
+                                            log_hisppop2 = c(quantile(wno_data$log_hisppop2, .25, na.rm = T),
+                                                            quantile(wno_data$log_hisppop2, .5, na.rm = T),
+                                                            quantile(wno_data$log_hisppop2, .75, na.rm = T))),
                     newdata = model.data) %>%
   rbind(.,
         predictions(model2, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
                                                              quantile(wno_data$log_terror, .75, na.rm = T),
                                                              by = .25),
-                                            log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
-                                                            quantile(wno_data$log_hisppop, .5, na.rm = T),
-                                                            quantile(wno_data$log_hisppop, .75, na.rm = T))),
+                                            log_hisppop2 = c(quantile(wno_data$log_hisppop2, .25, na.rm = T),
+                                                            quantile(wno_data$log_hisppop2, .5, na.rm = T),
+                                                            quantile(wno_data$log_hisppop2, .75, na.rm = T))),
                     newdata = model.data2)) %>%
   mutate(model_id = c(rep("model", 1296), rep("model2", (tally(.) - 1296))),
          log_terror = (exp(log_terror)-1),
-         log_hisppop = exp(log_hisppop)) %>%
-  select(rowid, predicted, log_hisppop, log_terror, model_id) %>%
+         log_hisppop2 = exp(log_hisppop2)) %>%
+  select(rowid, predicted, log_hisppop2, log_terror, model_id) %>%
   mutate(predicted = (exp(predicted)/(1 + exp(predicted)))) %>%
-  group_by(log_hisppop, log_terror, model_id) %>%
+  group_by(log_hisppop2, log_terror, model_id) %>%
   summarise(predicted_sum = mean(predicted)) %>%
-  ggplot(aes(x = log_terror, y = predicted_sum, linetype = as.factor(log_hisppop))) +
+  ggplot(aes(x = log_terror, y = predicted_sum, linetype = as.factor(log_hisppop2))) +
   geom_line() +
   labs(y = '"Borders and Immigration" Grievance Probability',
        x = "Number of Non-Right Wing Terror Threats or Attacks in U.S. in Previous Year") +
@@ -242,7 +242,7 @@ dev.off()
   #Note: This is the other 9/11 robustness check, where, instead of removing
       #2002 org-years, I made a terro*hisp*post-2001 three-way interaction.
 
-model3 <- plm(immigration ~ log_terror*log_hisppop*p2001 + discursive_style +
+model3 <- plm(immigration ~ log_terror*log_hisppop2*p2001 + discursive_style +
                per_repub + vcrime_rate + factor(reform) + log_vocality + 
                word_count + factor(admin),
              data = wno_data,
@@ -265,21 +265,21 @@ names(labs2) <- c("0","1")
 fig5 <- predictions(model3, variables = list(log_terror = seq(quantile(wno_data$log_terror, .25, na.rm = T), 
                                                              quantile(wno_data$log_terror, .75, na.rm = T),
                                                              by = .25),
-                                            log_hisppop = c(quantile(wno_data$log_hisppop, .25, na.rm = T),
-                                                            quantile(wno_data$log_hisppop, .5, na.rm = T),
-                                                            quantile(wno_data$log_hisppop, .75, na.rm = T)),
+                                            log_hisppop2 = c(quantile(wno_data$log_hisppop2, .25, na.rm = T),
+                                                            quantile(wno_data$log_hisppop2, .5, na.rm = T),
+                                                            quantile(wno_data$log_hisppop2, .75, na.rm = T)),
                                             p2001 = c(0,1)),
                     newdata = model.data3) %>%
   mutate(log_terror = (exp(log_terror)-1),
-         log_hisppop = exp(log_hisppop),
+         log_hisppop2 = exp(log_hisppop2),
          p2001 = as.factor(p2001)) %>%
-  select(rowid, predicted, log_hisppop, log_terror, p2001) %>%
+  select(rowid, predicted, log_hisppop2, log_terror, p2001) %>%
   mutate(predicted = (exp(predicted)/(1 + exp(predicted)))) %>%
-  group_by(log_hisppop, log_terror, p2001) %>%
+  group_by(log_hisppop2, log_terror, p2001) %>%
   summarise(predicted_sum = mean(predicted)) %>%
   ggplot(aes(x = log_terror, y = predicted_sum, 
-             linetype = as.factor(log_hisppop),
-             group = interaction(p2001, as.factor(log_hisppop)),
+             linetype = as.factor(log_hisppop2),
+             group = interaction(p2001, as.factor(log_hisppop2)),
              color = p2001)) +
   geom_line() +
   labs(y = '"Borders and Immigration" Grievance Probability',
@@ -339,7 +339,7 @@ dev.off()
 
 #Descriptive statistics
   #For continuous variables
-vars.con <- c("immigration","log_terror","log_hisppop",
+vars.con <- c("immigration","log_terror","log_hisppop2",
                "discursive_style","per_repub","vcrime_rate",
                "log_vocality","word_count")
 describe(model.data[vars.con])
@@ -367,7 +367,7 @@ mat.1 <- perm_table(data = wno_data, model = model.1,
                                               #results for a bivariate FE model
                                               #with no intercept
   #Model 2
-model.2 <- plm(immigration ~ log_terror*log_hisppop,
+model.2 <- plm(immigration ~ log_terror*log_hisppop2,
                data = wno_data,
                index = c("org","year"),
                model = "within")
@@ -379,8 +379,8 @@ mat.2 <- perm_tester(data = wno_data, model = model.2,
   #Fit statistics for all models
 fit <- list(
   feols(immigration ~ log_terror | org, data = wno_data),
-  feols(immigration ~ log_terror*log_hisppop | org, data = wno_data),
-  feols(immigration ~ log_terror*log_hisppop + discursive_style +
+  feols(immigration ~ log_terror*log_hisppop2 | org, data = wno_data),
+  feols(immigration ~ log_terror*log_hisppop2 + discursive_style +
           per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
           word_count + factor(admin) | org, data = wno_data)
 )
@@ -389,10 +389,10 @@ lapply(fit, r2) #r2, adj r2, within-r2, adj within-r2
 lapply(fit, function(x) sd(wno_data$immigration - x$fitted.values)) #rmse
 
 fit.2 <- list(
-  feols(immigration ~ log_terror*log_hisppop + discursive_style +
+  feols(immigration ~ log_terror*log_hisppop2 + discursive_style +
           per_repub + vcrime_rate + factor(reform) + p2001 + log_vocality + 
           word_count + factor(admin) | org, data = wno_data2),
-  feols(immigration ~ log_terror*log_hisppop*p2001 + discursive_style +
+  feols(immigration ~ log_terror*log_hisppop2*p2001 + discursive_style +
           per_repub + vcrime_rate + factor(reform) + log_vocality + 
           word_count + factor(admin) | org, data = wno_data)
 )
