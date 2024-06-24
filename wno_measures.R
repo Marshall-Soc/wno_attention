@@ -71,8 +71,7 @@ pre.meta$doc_id <- paste0("doc", 1:nrow(data))
 eng <- udpipe_download_model(language = "english-gum")
 ud_eng <- udpipe_load_model(eng$file_model)
 
-lemmas <- udpipe_annotate( #this can take a while; you can instead load 
-                           #the lemmas.rds file in the repo
+lemmas <- udpipe_annotate( #this can take a while
   x = data$text,
   object = ud_eng) %>%
   as_tibble() %>%
@@ -81,7 +80,7 @@ lemmas <- udpipe_annotate( #this can take a while; you can instead load
   dplyr::summarize(n = n())
 
   # Get triplet matrix
-df <- lemmas %>% #This can take a long time
+df <- lemmas %>%
   #remove words that are 2 characters long or less
   filter(!nchar(lemma) <= 2) %>%
   #remove English stop words in the Onix, SMART, or Snowball stop lists
