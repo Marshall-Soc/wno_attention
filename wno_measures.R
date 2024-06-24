@@ -35,6 +35,7 @@ data <- readtext(paste0(getwd(), "/TXTs/*"))
   # Not sure why doc_id sometimes gets duplicated, but below fixes it if it happens
 # data$doc_id <- gsub(".*/", "", data$doc_id)
 # data <- unique(data)
+pre.meta <- readRDS("data/meta.rds")
 
 
 ######################################
